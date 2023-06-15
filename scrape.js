@@ -1,6 +1,6 @@
 const fs = require("fs");
 const puppeteer = require("puppeteer");
-async function extractdata()
+async function getData()
 {
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
@@ -45,4 +45,4 @@ async function extractdata()
     }) 
     await browser.close();
 }
-extractdata();
+getData();
