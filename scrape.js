@@ -2,7 +2,7 @@ const fs = require("fs");
 const puppeteer = require("puppeteer");
 async function getData()
 {
-    const browser = await puppeteer.launch();
+    const browser = await puppeteer.launch({ headless: false });
     const page = await browser.newPage();
     await page.goto("https://www.amazon.in/All-Mobile-Phones/s?k=All+Mobile+Phones"); 
 
