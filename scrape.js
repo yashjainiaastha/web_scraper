@@ -1,64 +1,48 @@
-const puppeteer = require('puppeteer');
-const url = 'https://www.amazon.in/All-Mobile-Phones/s?k=All+Mobile+Phones';
-
-(async () => {
-  try {
-    
-    const browser = await puppeteer.launch({headless : false});
+const fs = require("fs");
+const puppeteer = require("puppeteer");
+async function extractdata()
+{
+    const browser = await puppeteer.launch();
     const page = await browser.newPage();
+    await page.goto("https://www.amazon.in/All-Mobile-Phones/s?k=All+Mobile+Phones"); 
 
-    
-    await page.goto(url);
-
-    
-    await page.waitForSelector('.s-result-item');
-
-    let hasNextPage = true;
-    let pageNumber = 1;
+    const productsHandles = await page.$$(".sg-col-inner") ;
     const products = [];
-
-    while (hasNextPage) {
-      console.log(`Scraping page ${pageNumber}`);
-
-      const pageProducts = await page.$$eval('.s-result-item', (elements) => {
-        return elements.map((element) => {
-          const titleElement = element.querySelector('.a-link-normal .a-text-normal');
-          const priceElement = element.querySelector('.a-price-whole');
-          const ratingElement = element.querySelector('.s-star-rating');
-
-          return {
-            title: titleElement ? titleElement.innerText.trim() : '',
-            price: priceElement ? priceElement.innerText.trim() : '',
-            rating: ratingElement ? ratingElement.getAttribute('aria-label').trim() : ''
-          };
-        });
-      });
-
-      products.push(...pageProducts);
-
-      const nextPageButton = await page.$('.s-pagination .s-pagination-item.s-pagination-next');
-      hasNextPage = !!nextPageButton;
-
-      if (hasNextPage) {
+    for(const productshandle of productsHandles)
+    {
+        let title = "Null";
+        let price = "Null";
+        let rating = "Null";
+        let numberofRating = "Null";
         
-        await nextPageButton.click();
+        try{
+            title = await page.evaluate((el) => el.querySelector(".s-title-instructions-style > h2").textContent, productshandle);
+        }catch(error){}
 
-       
-        await page.waitForSelector('.s-result-item');
-      }
+        try{
+             price = await page.evaluate((el) => el.querySelector(".a-price-whole").textContent, productshandle);;
+        }catch(error){}
 
-      pageNumber++;
+        try{
+             rating = await page.evaluate((el) => el.querySelector(".a-icon.a-icon-star-small.a-star-small-4.aok-align-bottom").textContent, productshandle);
+        }catch(error){}
+
+        try{
+             numberofRating = await page.evaluate((el) => el.querySelector(".a-section.a-spacing-none.a-spacing-top-micro > div > span:nth-child(2) > a > span").textContent, productshandle);
+        }catch(error){}
+        if (title!== "Null"){
+            products.push({title,price,rating,numberofRating});
+         
+
+        }
+        
     }
+    console.log(products)
 
-    products.forEach((product) => {
-      console.log('Title:', product.title);
-      console.log('Price:', product.price);
-      console.log('Rating:', product.rating);
-      console.log('---');
-    });
-
+    fs.writeFile("products.json",JSON.stringify(products), (err) => {
+        if(err) throw err;
+        console.log("File Saved");
+    }) 
     await browser.close();
-  } catch (error) {
-    console.error(error);
-  }
-})();
+}
+extractdata();
